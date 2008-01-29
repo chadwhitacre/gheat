@@ -147,7 +147,13 @@ This code is released under an MIT license:
   THE SOFTWARE.
 
 
-In the interest of full disclosure, you should know that this software
+The code for generating the heatmap images was ported from Ruby (under the
+MIT license):
+
+  http://blog.corunet.com/english/the-definitive-heatmap 
+
+
+And in the interest of full disclosure, you should know that this software
 incorporates code that was ported from Google's obfuscated JavaScript. This
 code is in the gmerc.py module under __/lib/python/site-packages/. Technically 
 speaking this is almost certainly a copyright infringement, but the code in 
