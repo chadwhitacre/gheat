@@ -1,0 +1,155 @@
+=======================================
+    GHEAT -- Google Heat Map
+=======================================
+
+This is gheat, a heat map tile server for Google Maps. It is implemented as
+an Aspen 0.8 application. Aspen is a Python webserver.
+
+
+
+---------------------------------------
+    INSTALLATION
+---------------------------------------
+
+1. First install Python 2.5: http://www.python.org/.
+
+2. Then install PIL: http://www.pythonware.com/products/pil/. 
+
+2. Then install Aspen 0.8: http://www.zetadev.com/software/aspen/.
+
+3. Then unpack the gheat distribution in an empty directory.
+   (Alternately, svn checkout into an empty directory.)
+
+4. Launch aspen in your new gheat directory; it should start on port 8080.
+
+5. To see if it worked, hit http://localhost:8080/4/4,6.png.
+
+
+Gheat should work cross-platform. I've tested it on FreeBSD and Windows.
+
+
+
+---------------------------------------
+    HOW IT WORKS
+---------------------------------------
+
+Basics
+------
+
+Gheat is designed to run as a separate server from your main website (the
+one with the Google Map on it). Aspen is the server it is designed to run
+under. The __ directory is part of Aspen. That's where aspen looks for "meta" 
+site files:
+
+  bin/          offline scripts
+  lib/python    server-side Python code
+  etc/          configuration files
+  var/          database files
+
+
+
+Getting Data In
+---------------
+
+Gheat comes with a pre-populated database so you can see it in action
+quickly. To populate the database with your own heat map information, you
+use the script at __/bin/db.py:
+
+  $ cd __
+  $ bin/db.py
+  <output>
+
+
+The database is at __/var/points.db, and it is built from a flat file at
+__/var/points.txt. Points.txt is in CSV format, with three columns:
+
+  unique id
+  latitude
+  longitude
+
+
+The idea is that you would write a script that generates the points.txt from
+your main data source. The unique id for each point is used to keep the two
+databases in sync; it can be any string. The db.py script takes care of 
+generating the actual heatmap information based on the proximity of your 
+points to one another, and it only actually marks points as changed in the
+database if they have been added or modified in your CSV.
+
+
+
+Getting Tiles Out
+-----------------
+
+To request a tile through the web, you call an URL of this form:
+
+  http://localhost:8080/<zoom>/<x>,<y>.png
+
+
+The <zoom>, <x>, and <y> values are derived from Google Maps. The URL is
+handled by the 'wsgi' callable in __/lib/python/site-packages/gheat.py,
+wired up for aspen in the __/etc/apps.conf file.
+
+Gheat only actually generates map tiles that are requested through the web.
+This makes sense because at the higher zoom levels there are hundreds of 
+thousands of tiles, and most of them will probably never be requested. Once
+a tile is generated, it is never regenerated until relevant points in the
+database change. In short, it's a pretty efficient system for most use
+cases. There is a script at __/bin/gen-tile.py which will pre-create tiles for
+the first five zoom levels.
+
+
+
+Wiring It Up to a GMap
+----------------------
+
+Look at gheat.js in this directory for instructions on wiring up your Google
+Map implementation to use your new tile layer.
+
+
+
+
+=======================================
+    FEEDBACK
+=======================================
+
+Send feedback to chad@zetaweb.com or use the issue tracker:
+
+  http://code.google.com/p/gheat/issues/list
+
+
+Thanks.
+
+
+=======================================
+    LEGAL
+======================================= 
+
+This code is released under an MIT license:
+
+  Copyright (c) 2008 Chad W. L. Whitacre
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+
+
+In the interest of full disclosure, you should know that this software
+incorporates code that was ported from Google's obfuscated JavaScript. This
+code is in the gmerc.py module under __/lib/python/site-packages/. Technically 
+speaking this is almost certainly a copyright infringement, but the code in 
+question is less than the "15-lines" rule of thumb often employed in matters of 
+code borrowing.
