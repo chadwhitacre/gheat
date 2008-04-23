@@ -1,8 +1,7 @@
 import os
 
 from PIL import Image, ImageChops
-from gheat import SIZE
-from gheat.backends import base
+from gheat import SIZE, base
 
 
 class ColorScheme(base.ColorScheme):

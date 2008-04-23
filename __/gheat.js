@@ -15,7 +15,8 @@ copyrights.addCopyright(copyright);
 gheat = new GTileLayer(copyrights, 10, 0);
 gheat.getTileUrl = function (tile, zoom) {
   base = "http://localhost:8080";
-  url = base +'/'+ zoom +'/'+ tile.x +','+ tile.y +'.png';
+  color_scheme = 'classic';
+  url = base +'/'+ color_scheme +'/'+ zoom +'/'+ tile.x +','+ tile.y +'.png';
   return url;
 }
 gheat.isPng = function () {return true;}

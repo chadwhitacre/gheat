@@ -2,8 +2,7 @@ import os
 
 import numpy
 import pygame
-from gheat import SIZE
-from gheat.backends import base
+from gheat import SIZE, base
 
 
 WHITE = (255, 255, 255)

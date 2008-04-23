@@ -1,5 +1,7 @@
+fix opacity shift
 transparencies in PIL
 empties in PIL
+profile PIL and Pygame
 ===DONE===
 tilesets should be kept separate
 tilesets need to be separate in javascript so images can be cached

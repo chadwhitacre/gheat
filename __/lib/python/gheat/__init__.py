@@ -12,7 +12,11 @@ from aspen.utils import translate
 # Logging config
 # ==============
 
-logging.basicConfig(level=logging.INFO) # Ack! This should be in Aspen. :^(
+if aspen.mode.DEVDEB:
+    level = logging.INFO
+else:
+    level = logging.WARNING
+logging.basicConfig(level=level) # Ack! This should be in Aspen. :^(
 log = logging.getLogger('gheat')
 
 
@@ -44,7 +48,7 @@ MAX_ZOOM = 31 # this depends on Google API; 0 is furthest out as of recent ver.
 OPAQUE = 255
 TRANSPARENT = 0
 
-zoom_opaque = conf.get('zoom_opaque', '-6')
+zoom_opaque = conf.get('zoom_opaque', '-15')
 try:
     zoom_opaque = int(zoom_opaque)
 except ValueError:
@@ -71,6 +75,8 @@ else:                                   # want general fade
         else:
             opacity = OPAQUE - (zoom * opacity_step)
         zoom_to_opacity[zoom] = int(opacity)
+
+print zoom_to_opacity
 
 
 # Database
@@ -99,17 +105,17 @@ if _want not in ('pil', 'pygame', ''):
 
 if _want:
     if _want == 'pygame':
-        from gheat.backends.pygame_ import ColorScheme, Dot, Tile
+        from gheat import pygame_ as backend
     elif _want == 'pil':
-        from gheat.backends.pil_ import ColorScheme, Dot, Tile
+        from gheat import pil_ as backend
     IMG_LIB = _want
 else:
     try:
-        from gheat.backends.pygame_ import ColorScheme, Dot, Tile
+        from gheat import pygame_ as backend
         IMG_LIB = 'pygame'
     except ImportError:
         try:
-            from gheat.backends.pil_ import ColorScheme, Dot, Tile
+            from gheat import pil_ as backend
             IMG_LIB = 'pil'
         except ImportError:
             pass
@@ -133,11 +139,11 @@ for fname in os.listdir(_color_schemes_dir):
         continue
     name = os.path.splitext(fname)[0]
     fspath = os.path.join(_color_schemes_dir, fname)
-    color_schemes[name] = ColorScheme(name, fspath)
+    color_schemes[name] = backend.ColorScheme(name, fspath)
 
 dots = dict()                   # this will get lazily imported by backends
 for zoom in range(MAX_ZOOM):
-    dots[zoom] = Dot(zoom)
+    dots[zoom] = backend.Dot(zoom)
 
 
 # Main WSGI callable 
@@ -186,7 +192,7 @@ def wsgi(environ, start_response):
         # The tile that is built here will be served by the static handler.
 
         color_scheme = color_schemes[color_scheme]
-        tile = Tile(color_scheme, zoom, x, y, fspath)
+        tile = backend.Tile(color_scheme, zoom, x, y, fspath)
         if tile.is_empty():
             log.info('serving empty tile %s' % path)
             fspath = color_scheme.get_empty_fspath(zoom)
