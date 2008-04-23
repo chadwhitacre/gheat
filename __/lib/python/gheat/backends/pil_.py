@@ -1,15 +1,18 @@
 import os
 
 from PIL import Image, ImageChops
-from gheat import base, COLORS_PATH, SIZE
+from gheat import SIZE
+from gheat.backends import base
 
 
-colors = Image.open(COLORS_PATH).load() # @@: why not gen?
+class ColorScheme(base.ColorScheme):
+    def hook_set(self, fspath):
+        self.colors = Image.open(fspath).load()
 
 
 class Dot(base.Dot):
-    def variants(self, dotpath):
-        img = Image.open(dotpath)
+    def hook_get(self, fspath):
+        img = Image.open(fspath)
         half_size = img.size[0] / 2
         return img, half_size 
 

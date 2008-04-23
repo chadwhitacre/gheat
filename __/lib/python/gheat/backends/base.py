@@ -5,7 +5,64 @@ import stat
 import aspen
 import gheat
 import gmerc
-from gheat import SIZE, ZOOM_FADED
+from gheat import BUILD_EMPTIES, DIRMODE, SIZE, log, zoom_to_opacity
+
+
+def compute_opacity(conf, pixel):
+    """Given two opacity ints, return an int.
+    """
+    opacity = int(( (conf/255.0)   
+                  * (pixel/255.0) 
+                     ) * 255)
+    return opacity
+
+
+class ColorScheme(object):
+    """Base class for color scheme representations.
+    """
+
+    def __init__(self, name, fspath):
+        """Takes the filesystem path of the defining PNG.
+        """
+        self.hook_set(fspath)
+
+        empties_dir = os.path.join(aspen.paths.root, name, 'empties')
+        if not BUILD_EMPTIES:
+            log.info("not pre-creating empty tiles for %s" % name)
+        else:    
+            if not os.path.isdir(empties_dir):
+                os.makedirs(empties_dir, DIRMODE)
+            if not os.access(empties_dir, os.R_OK|os.W_OK|os.X_OK):
+                raise ConfigurationError( "Permissions too restrictive on "
+                                        + "empties directory "
+                                        + "(%s)." % empties_dir
+                                         )
+            for fname in os.listdir(empties_dir):
+                if fname.endswith('.png'):
+                    os.remove(os.path.join(empties_dir, fname))
+            for zoom, opacity in zoom_to_opacity.items():
+                fspath = os.path.join(empties_dir, str(zoom)+'.png')
+                self.hook_build_empty(opacity, fspath)
+            
+            log.info("pre-created empty tiles in %s" % empties_dir)
+
+        self.empties_dir = empties_dir
+
+
+    def get_empty_fspath(self, zoom):
+        return os.path.join(self.empties_dir, str(zoom)+'.png')
+
+
+    def hook_set(self):
+        """Set things that your backend will want later.
+        """
+        raise NotImplementedError
+
+
+    def hook_build_empty(self, opacity, fspath):
+        """Given an opacity and a path, save an empty tile.
+        """
+        raise NotImplementedError
 
 
 class Dot(object):
@@ -15,12 +72,12 @@ class Dot(object):
     def __init__(self, zoom):
         """Takes a zoom level.
         """
-        dotname = 'dot%d.png' % zoom
-        dotpath = os.path.join(aspen.paths.__, 'etc', 'dots', dotname)
-        self.img, self.half_size = self.variants(dotpath)
+        name = 'dot%d.png' % zoom
+        fspath = os.path.join(aspen.paths.__, 'etc', 'dots', name)
+        self.img, self.half_size = self.hook_get(fspath)
         
-    def variants(self, dotpath):
-        """Given a dotpath, return three items.
+    def hook_get(self, fspath):
+        """Given a filesystem path, return two items.
         """
         raise NotImplementedError
 
@@ -29,7 +86,7 @@ class Tile(object):
     """Base class for tile representations.
     """
 
-    def __init__(self, x, y, zoom, fspath):
+    def __init__(self, color_scheme, zoom, x, y, fspath):
         """x and y are tile coords per Google Maps.
         """
 
@@ -85,9 +142,34 @@ class Tile(object):
         self.llbound = (n,s,e,w)
         self.zoom = zoom
         self.fspath = fspath
+        self.opacity = zoom_to_opacity[zoom]
+        self.color_scheme = color_scheme
   
 
-    def isstale(self):
+    def is_empty(self):
+        """With attributes set on self, return a boolean.
+
+        Calc lat/lng bounds of this tile (include half-dot-width of padding)
+        SELECT count(uid) FROM points
+
+        """
+        points = gheat.get_cursor() 
+        points = points.execute("""
+    
+            SELECT count(uid)
+              FROM points
+             WHERE lat <= ?
+               AND lat >= ?
+               AND lng <= ?
+               AND lng >= ?
+    
+            """, self.llbound)
+    
+        numpoints = points.fetchone()[0] # this is guaranteed to exist, right?
+        return numpoints == 0
+
+
+    def is_stale(self):
         """With attributes set on self, return a boolean.
 
         Calc lat/lng bounds of this tile (include half-dot-width of padding)
@@ -100,7 +182,7 @@ class Tile(object):
         timestamp = os.stat(self.fspath)[stat.ST_MTIME]
         modtime = datetime.datetime.fromtimestamp(timestamp)
     
-        points = gheat.cursor() 
+        points = gheat.get_cursor() 
         points = points.execute("""
     
             SELECT count(uid)
@@ -127,7 +209,7 @@ class Tile(object):
         # Build a closure that gives us the x,y pixel coords of the points
         # to be included on this tile, relative to the top-left of the tile.
 
-        _points = gheat.cursor()
+        _points = gheat.get_cursor()
         _points.execute("""
 
             SELECT *
@@ -140,19 +222,13 @@ class Tile(object):
         """, self.llbound)
    
         def points():
-            """Yield x,y pixel coords within this tile.
+            """Yield x,y pixel coords within this tile, top-left of dot.
             """
             for point in _points:
                 x, y = gmerc.ll2px(point['lat'], point['lng'], self.zoom)
                 x = x - self.x1 # account for tile offset relative to 
                 y = y - self.y1 #  overall map
-                yield x,y
-
-
-        # Calculate the opacity.
-        # ======================
-
-        opacity = SIZE - ((SIZE / ZOOM_FADED) * (self.zoom + 1))
+                yield x-self.pad,y-self.pad
 
 
         # Main logic
@@ -161,11 +237,11 @@ class Tile(object):
         # here to maybe create a directory before handing back to the backend
         # to actually write to disk.
 
-        tile = self.hook_rebuild(points(), opacity)
+        tile = self.hook_rebuild(points())
 
         dirpath = os.path.dirname(self.fspath)
         if not os.path.isdir(dirpath):
-            os.mkdir(dirpath, 0755)
+            os.makedirs(dirpath, DIRMODE)
 
         self.hook_save(tile)
 

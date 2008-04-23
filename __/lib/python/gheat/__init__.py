@@ -1,9 +1,7 @@
 import logging
-import math
 import os
 import sqlite3
 import stat
-import sys
 
 import aspen
 from aspen import ConfigurationError, restarter
@@ -22,30 +20,63 @@ log = logging.getLogger('gheat')
 # =============
 # Set some things that backends will need.
 
-SIZE = 256 # tile size, square assumed; NB: changing this breaks gmerc calls!
-ZOOM_FADED = 15 # zoom level at which the map should be totally faded
-COLORS_DIR = os.path.join(aspen.paths.__, 'etc', 'colors')
-COLORS_NAME = aspen.conf.gheat.get('color_scheme', 'classic')
-if os.sep in COLORS_NAME:
-    COLORS_PATH = COLORS_NAME
-else:
-    COLORS_PATH = os.path.join(COLORS_DIR, COLORS_NAME+'.png')
-if not os.path.isfile(COLORS_PATH):
-    a = os.listdir(COLORS_DIR)
-    v = [os.path.splitext(n)[0] for n in a if n.endswith('.png')]
-    raise ConfigurationError( "Invalid color scheme: %s. " % COLORS_NAME
-                            + "(Valid values are: %s)" % ', '.join(v)
-                             )
-restarter.track(COLORS_PATH)
+conf = aspen.conf.gheat
+
 ALWAYS_BUILD = ('true', 'yes', '1')
-ALWAYS_BUILD = aspen.conf.gheat.get('always_build','').lower() in ALWAYS_BUILD
-MAX_ZOOM = 31
+ALWAYS_BUILD = conf.get('always_build', '').lower() in ALWAYS_BUILD
+
+BUILD_EMPTIES = ('true', 'yes', '1')
+BUILD_EMPTIES = conf.get('build_empties', 'true').lower() in BUILD_EMPTIES
+
+DIRMODE = conf.get('dirmode', '0755')
+try:
+    DIRMODE = int(eval(DIRMODE))
+except (NameError, SyntaxError, ValueError):
+    raise ConfigurationError("dirmode (%s) must be an integer." % dirmode)
+
+SIZE = 256 # size of (square) tile; NB: changing this will break gmerc calls!
+MAX_ZOOM = 31 # this depends on Google API; 0 is furthest out as of recent ver.
+
+
+# Opacity
+# -------
+
+OPAQUE = 255
+TRANSPARENT = 0
+
+zoom_opaque = conf.get('zoom_opaque', '-6')
+try:
+    zoom_opaque = int(zoom_opaque)
+except ValueError:
+    raise ConfigurationError("zoom_opaque must be an integer.")
+
+zoom_transparent = conf.get('zoom_transparent', '15')
+try:
+    zoom_transparent = int(zoom_transparent)
+except ValueError:
+    raise ConfigurationError("zoom_transparent must be an integer.")
+
+num_opacity_steps = zoom_transparent - zoom_opaque
+zoom_to_opacity = dict()
+if num_opacity_steps < 1:               # don't want general fade
+    for zoom in range(0, MAX_ZOOM + 1):
+        zoom_to_opacity[zoom] = None 
+else:                                   # want general fade
+    opacity_step = OPAQUE / float(num_opacity_steps) # chunk of opacity
+    for zoom in range(0, MAX_ZOOM + 1):
+        if zoom < zoom_opaque:
+            opacity = OPAQUE 
+        elif zoom > zoom_transparent:
+            opacity = TRANSPARENT
+        else:
+            opacity = OPAQUE - (zoom * opacity_step)
+        zoom_to_opacity[zoom] = int(opacity)
 
 
 # Database
 # ========
 
-def cursor():
+def get_cursor():
     """Return a database cursor.
     """
     db = sqlite3.connect(os.path.join(aspen.paths.__, 'var', 'points.db'))
@@ -56,15 +87,11 @@ def cursor():
 # Try to find an image library.
 # =============================
 
-if __name__ == '__main__':
-    root = aspen.find_root()
-    aspen.configure(['--root', root])
-
 IMG_LIB = None 
 IMG_LIB_PIL = False 
 IMG_LIB_PYGAME = False
 
-_want = aspen.conf.gheat.get('image_library', '').lower()
+_want = conf.get('image_library', '').lower()
 if _want not in ('pil', 'pygame', ''):
     raise ConfigurationError( "The %s image library is not supported, only PIL "
                             + "and Pygame (assuming they are installed)."
@@ -72,17 +99,17 @@ if _want not in ('pil', 'pygame', ''):
 
 if _want:
     if _want == 'pygame':
-        from gheat._pygame import Tile, Dot, colors
+        from gheat.backends.pygame_ import ColorScheme, Dot, Tile
     elif _want == 'pil':
-        from gheat._pil import Tile, Dot, colors
+        from gheat.backends.pil_ import ColorScheme, Dot, Tile
     IMG_LIB = _want
 else:
     try:
-        from gheat._pygame import Tile, Dot, colors
+        from gheat.backends.pygame_ import ColorScheme, Dot, Tile
         IMG_LIB = 'pygame'
     except ImportError:
         try:
-            from gheat._pil import Tile, Dot, colors
+            from gheat.backends.pil_ import ColorScheme, Dot, Tile
             IMG_LIB = 'pil'
         except ImportError:
             pass
@@ -96,11 +123,19 @@ IMG_LIB_PIL = IMG_LIB == 'pil'
 log.info("Using the %s library" % IMG_LIB)
 
 
-# Set up dots.
-# ============
-# This will get lazily imported by backends.
+# Set up color schemes and dots.
+# ==============================
 
-dots = dict()
+color_schemes = dict()          # this is used below
+_color_schemes_dir = os.path.join(aspen.paths.__, 'etc', 'color_schemes')
+for fname in os.listdir(_color_schemes_dir):
+    if not fname.endswith('.png'):
+        continue
+    name = os.path.splitext(fname)[0]
+    fspath = os.path.join(_color_schemes_dir, fname)
+    color_schemes[name] = ColorScheme(name, fspath)
+
+dots = dict()                   # this will get lazily imported by backends
 for zoom in range(MAX_ZOOM):
     dots[zoom] = Dot(zoom)
 
@@ -108,20 +143,31 @@ for zoom in range(MAX_ZOOM):
 # Main WSGI callable 
 # ==================
 
+ROOT = aspen.paths.root
+
 def wsgi(environ, start_response):
     path = environ['PATH_INFO']
-    fspath = translate(environ['PATH_TRANSLATED'], path)
+    fspath = translate(ROOT, path)
 
     if path.endswith('.png'):
 
         # Parse and validate input.
         # =========================
-        # URL paths are of the form /<zoom>/<x>,<y>.png, e.g.: /3/0,1.png
+        # URL paths are of the form:
+        #
+        #   /<color_scheme>/<zoom>/<x>,<y>.png
+        #
+        # E.g.:
+        #
+        #   /classic/3/0,1.png
 
-        raw = path[:-4]
+        raw = path[:-4] # strip extension
         try:
-            assert raw.count('/') == 2, "%d /'s" % raw.count('/')
-            foo, zoom, xy = raw.split('/')
+            assert raw.count('/') == 3, "%d /'s" % raw.count('/')
+            foo, color_scheme, zoom, xy = raw.split('/')
+            assert color_scheme in color_schemes, ( "bad color_scheme: "
+                                                  + color_scheme
+                                                   )
             assert xy.count(',') == 1, "%d /'s" % xy.count(',')
             x, y = xy.split(',')
             assert zoom.isdigit() and x.isdigit() and y.isdigit(), "not digits"
@@ -139,8 +185,12 @@ def wsgi(environ, start_response):
         # ========================
         # The tile that is built here will be served by the static handler.
 
-        tile = Tile(x, y, zoom, fspath)
-        if tile.isstale() or ALWAYS_BUILD:
+        color_scheme = color_schemes[color_scheme]
+        tile = Tile(color_scheme, zoom, x, y, fspath)
+        if tile.is_empty():
+            log.info('serving empty tile %s' % path)
+            fspath = color_scheme.get_empty_fspath(zoom)
+        elif tile.is_stale() or ALWAYS_BUILD:
             log.info('rebuilding %s' % path)
             tile.rebuild()
 
