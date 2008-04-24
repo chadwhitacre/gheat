@@ -4,6 +4,8 @@ import sqlite3
 import stat
 
 import aspen
+if not aspen.CONFIGURED: # for tests
+    aspen.configure()
 from aspen import ConfigurationError, restarter
 from aspen.handlers.static import wsgi as static_handler
 from aspen.utils import translate
@@ -40,43 +42,6 @@ except (NameError, SyntaxError, ValueError):
 
 SIZE = 256 # size of (square) tile; NB: changing this will break gmerc calls!
 MAX_ZOOM = 31 # this depends on Google API; 0 is furthest out as of recent ver.
-
-
-# Opacity
-# -------
-
-OPAQUE = 255
-TRANSPARENT = 0
-
-zoom_opaque = conf.get('zoom_opaque', '-15')
-try:
-    zoom_opaque = int(zoom_opaque)
-except ValueError:
-    raise ConfigurationError("zoom_opaque must be an integer.")
-
-zoom_transparent = conf.get('zoom_transparent', '15')
-try:
-    zoom_transparent = int(zoom_transparent)
-except ValueError:
-    raise ConfigurationError("zoom_transparent must be an integer.")
-
-num_opacity_steps = zoom_transparent - zoom_opaque
-zoom_to_opacity = dict()
-if num_opacity_steps < 1:               # don't want general fade
-    for zoom in range(0, MAX_ZOOM + 1):
-        zoom_to_opacity[zoom] = None 
-else:                                   # want general fade
-    opacity_step = OPAQUE / float(num_opacity_steps) # chunk of opacity
-    for zoom in range(0, MAX_ZOOM + 1):
-        if zoom < zoom_opaque:
-            opacity = OPAQUE 
-        elif zoom > zoom_transparent:
-            opacity = TRANSPARENT
-        else:
-            opacity = OPAQUE - (zoom * opacity_step)
-        zoom_to_opacity[zoom] = int(opacity)
-
-print zoom_to_opacity
 
 
 # Database
@@ -141,9 +106,11 @@ for fname in os.listdir(_color_schemes_dir):
     fspath = os.path.join(_color_schemes_dir, fname)
     color_schemes[name] = backend.ColorScheme(name, fspath)
 
-dots = dict()                   # this will get lazily imported by backends
-for zoom in range(MAX_ZOOM):
-    dots[zoom] = backend.Dot(zoom)
+def load_dots(backend):
+    """Given a backend module, return a mapping of zoom level to Dot object.
+    """
+    return dict([(zoom, backend.Dot(zoom)) for zoom in range(MAX_ZOOM)])
+dots = load_dots(backend) # factored for easier use from scripts
 
 
 # Main WSGI callable 
@@ -155,7 +122,9 @@ def wsgi(environ, start_response):
     path = environ['PATH_INFO']
     fspath = translate(ROOT, path)
 
-    if path.endswith('.png'):
+    if path.endswith('.png') and 'empties' not in path: 
+                        # let people hit empties directly if they want; why not?
+
 
         # Parse and validate input.
         # =========================
@@ -192,15 +161,17 @@ def wsgi(environ, start_response):
         # The tile that is built here will be served by the static handler.
 
         color_scheme = color_schemes[color_scheme]
-        tile = backend.Tile(color_scheme, zoom, x, y, fspath)
+        tile = backend.Tile(color_scheme, dots, zoom, x, y, fspath)
         if tile.is_empty():
             log.info('serving empty tile %s' % path)
             fspath = color_scheme.get_empty_fspath(zoom)
         elif tile.is_stale() or ALWAYS_BUILD:
             log.info('rebuilding %s' % path)
             tile.rebuild()
+            tile.save()
 
 
     environ['PATH_TRANSLATED'] = fspath
     return static_handler(environ, start_response)
+
 

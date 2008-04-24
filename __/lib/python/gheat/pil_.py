@@ -68,7 +68,7 @@ class Tile(base.Tile):
         return tile
 
 
-    def hook_save(self, tile):
-        tile.save(self.fspath, 'PNG')
+    def hook_save(self):
+        self.img.save(self.fspath, 'PNG')
 
 

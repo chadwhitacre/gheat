@@ -5,16 +5,8 @@ import stat
 import aspen
 import gheat
 import gmerc
-from gheat import BUILD_EMPTIES, DIRMODE, SIZE, log, zoom_to_opacity
-
-
-def compute_opacity(conf, pixel):
-    """Given two opacity ints, return an int.
-    """
-    opacity = int(( (conf/255.0)   
-                  * (pixel/255.0) 
-                     ) * 255)
-    return opacity
+import gheat.opacity
+from gheat import BUILD_EMPTIES, DIRMODE, SIZE, log
 
 
 class ColorScheme(object):
@@ -40,7 +32,7 @@ class ColorScheme(object):
             for fname in os.listdir(empties_dir):
                 if fname.endswith('.png'):
                     os.remove(os.path.join(empties_dir, fname))
-            for zoom, opacity in zoom_to_opacity.items():
+            for zoom, opacity in gheat.opacity.mapping.items():
                 fspath = os.path.join(empties_dir, str(zoom)+'.png')
                 self.hook_build_empty(opacity, fspath)
             
@@ -67,6 +59,10 @@ class ColorScheme(object):
 
 class Dot(object):
     """Base class for dot representations.
+
+    Unlike color scheme, the same basic external API works for both backends. 
+    How we compute that API is different, though.
+
     """
 
     def __init__(self, zoom):
@@ -86,17 +82,18 @@ class Tile(object):
     """Base class for tile representations.
     """
 
-    def __init__(self, color_scheme, zoom, x, y, fspath):
+    img = None
+
+    def __init__(self, color_scheme, dots, zoom, x, y, fspath):
         """x and y are tile coords per Google Maps.
         """
 
         # Calculate some things.
         # ======================
 
-        from gheat import dots # lazy import to avoid circulation
         dot = dots[zoom]
-    
-    
+
+
         # Translate tile to pixel coords.
         # -------------------------------
 
@@ -142,7 +139,7 @@ class Tile(object):
         self.llbound = (n,s,e,w)
         self.zoom = zoom
         self.fspath = fspath
-        self.opacity = zoom_to_opacity[zoom]
+        self.opacity = gheat.opacity.mapping[zoom]
         self.color_scheme = color_scheme
   
 
@@ -201,7 +198,7 @@ class Tile(object):
 
 
     def rebuild(self):
-        """Calculate a couple common things and then handoff to a backend.
+        """Rebuild the image at self.img. Real work delegated to subclasses.
         """
 
         # Calculate points.
@@ -237,13 +234,11 @@ class Tile(object):
         # here to maybe create a directory before handing back to the backend
         # to actually write to disk.
 
-        tile = self.hook_rebuild(points())
+        self.img = self.hook_rebuild(points())
 
         dirpath = os.path.dirname(self.fspath)
-        if not os.path.isdir(dirpath):
+        if dirpath and not os.path.isdir(dirpath):
             os.makedirs(dirpath, DIRMODE)
-
-        self.hook_save(tile)
 
 
     def hook_rebuild(self, points, opacity):
@@ -272,8 +267,8 @@ class Tile(object):
         raise NotImplementedError
 
 
-    def hook_save(self, tile):
-        """Given your tile object again, write it to disk.
+    def hook_save(self):
+        """Write the image at self.img to disk.
         """
         raise NotImplementedError
 
