@@ -2,7 +2,7 @@ OPAQUE = 255
 TRANSPARENT = 0
 
 
-def _build_mapping(conf=None, MAX_ZOOM=31):
+def _build_zoom_mapping(conf=None, MAX_ZOOM=31):
     """Build and return the zoom_to_opacity mapping
     """
     if conf is None:
@@ -38,5 +38,5 @@ def _build_mapping(conf=None, MAX_ZOOM=31):
 
     return zoom_to_opacity
 
-mapping = _build_mapping()
+zoom_to_opacity = _build_zoom_mapping()
 

@@ -1,6 +1,5 @@
 import os
 
-import gheat.opacity
 import numpy
 import pygame
 from gheat import SIZE, base
@@ -14,7 +13,7 @@ WHITE = (255, 255, 255)
 # 
 #   http://www.pygame.org/wiki/HeadlessNoWindowsNeeded 
 # 
-# Beyond that, also set the color depth to 32 bits.
+# Beyond what is said there, also set the color depth to 32 bits.
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 pygame.display.init()
@@ -111,7 +110,13 @@ class Tile(base.Tile):
         # working). The inner loop runs 65536 times, and just moving the 
         # computation out of a function and inline into the loop sped things up 
         # about 50%. It sped it up another 50% to cache the values, since each
-        # of the 65536 variables only ever takes one of 256 values.
+        # of the 65536 variables only ever takes one of 256 values. Not super
+        # fast still, but more reasonable (1.5 seconds instead of 12).
+        #
+        # I would expect that precomputing the dictionary at start-up time 
+        # should give us another boost, but it slowed us down again. Maybe 
+        # since with precomputation we have to calculate more than we use, the 
+        # size of the dictionary made a difference? Worth exploring ...
 
         _computed_opacities = dict()
 
@@ -137,7 +142,7 @@ class Tile(base.Tile):
         return tile
 
 
-    def hook_save(self):
+    def save(self):
         pygame.image.save(self.img, self.fspath)
 
 

@@ -1,4 +1,4 @@
-from gheat.opacity import _build_mapping 
+from gheat.opacity import _build_zoom_mapping 
 
 
 def fixed(d):
@@ -17,7 +17,7 @@ def test_basic():
                , (3,63)
                , (4,0)
                 ]
-    actual = fixed(_build_mapping(conf, 4))
+    actual = fixed(_build_zoom_mapping(conf, 4))
     assert actual == expected, actual
 
 def test_unclean():
@@ -31,7 +31,7 @@ def test_unclean():
                , (4,51)
                , (5,0)
                 ]
-    actual = fixed(_build_mapping(conf, 5))
+    actual = fixed(_build_zoom_mapping(conf, 5))
     assert actual == expected, actual
 
 """
@@ -65,7 +65,7 @@ def test_2(): # [(-------)xxxx]
                , (5,0)
                , (6,0)
                 ]
-    actual = fixed(_build_mapping(conf, 6))
+    actual = fixed(_build_zoom_mapping(conf, 6))
     assert actual == expected, actual
 
 def test_3(): # [xxxx(-------)]
@@ -80,7 +80,7 @@ def test_3(): # [xxxx(-------)]
                , (5,63)
                , (6,0)
                 ]
-    actual = fixed(_build_mapping(conf, 6))
+    actual = fixed(_build_zoom_mapping(conf, 6))
     assert actual == expected, actual
 
 def test_4(): # (-[-------------]-)
@@ -92,7 +92,7 @@ def test_4(): # (-[-------------]-)
                , (2,102)
                , (3,51)
                 ]
-    actual = fixed(_build_mapping(conf, 3))
+    actual = fixed(_build_zoom_mapping(conf, 3))
     assert actual == expected, actual
 
 def test_5(): # (-[--------)xxxx]
@@ -107,7 +107,7 @@ def test_5(): # (-[--------)xxxx]
                , (5,0)
                , (6,0)
                 ]
-    actual = fixed(_build_mapping(conf, 6))
+    actual = fixed(_build_zoom_mapping(conf, 6))
     assert actual == expected, actual
 
 def test_6(): # (-[------------)]
@@ -120,7 +120,7 @@ def test_6(): # (-[------------)]
                , (3,51)
                , (4,0)
                 ]
-    actual = fixed(_build_mapping(conf, 4))
+    actual = fixed(_build_zoom_mapping(conf, 4))
     assert actual == expected, actual
 
 def test_7(): # [xxxx(--------]-)
@@ -133,7 +133,7 @@ def test_7(): # [xxxx(--------]-)
                , (3,191)
                , (4,127)
                 ]
-    actual = fixed(_build_mapping(conf, 4))
+    actual = fixed(_build_zoom_mapping(conf, 4))
     assert actual == expected, actual
 
 def test_8(): # [(------------]-)
@@ -145,7 +145,7 @@ def test_8(): # [(------------]-)
                , (2,153)
                , (3,102)
                 ]
-    actual = fixed(_build_mapping(conf, 3))
+    actual = fixed(_build_zoom_mapping(conf, 3))
     assert actual == expected, actual
 
 def test_9(): # [x(-------)xxx]
@@ -163,6 +163,6 @@ def test_9(): # [x(-------)xxx]
                , (8,0)
                , (9,0)
                 ]
-    actual = fixed(_build_mapping(conf, 9))
+    actual = fixed(_build_zoom_mapping(conf, 9))
     assert actual == expected, actual
 

@@ -32,7 +32,7 @@ class ColorScheme(object):
             for fname in os.listdir(empties_dir):
                 if fname.endswith('.png'):
                     os.remove(os.path.join(empties_dir, fname))
-            for zoom, opacity in gheat.opacity.mapping.items():
+            for zoom, opacity in gheat.opacity.zoom_to_opacity.items():
                 fspath = os.path.join(empties_dir, str(zoom)+'.png')
                 self.hook_build_empty(opacity, fspath)
             
@@ -139,7 +139,7 @@ class Tile(object):
         self.llbound = (n,s,e,w)
         self.zoom = zoom
         self.fspath = fspath
-        self.opacity = gheat.opacity.mapping[zoom]
+        self.opacity = gheat.opacity.zoom_to_opacity[zoom]
         self.color_scheme = color_scheme
   
 
@@ -267,7 +267,7 @@ class Tile(object):
         raise NotImplementedError
 
 
-    def hook_save(self):
+    def save(self):
         """Write the image at self.img to disk.
         """
         raise NotImplementedError
