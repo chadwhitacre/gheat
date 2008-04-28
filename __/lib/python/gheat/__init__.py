@@ -6,7 +6,7 @@ import stat
 import aspen
 if not aspen.CONFIGURED: # for tests
     aspen.configure()
-from aspen import ConfigurationError, restarter
+from aspen import ConfigurationError
 from aspen.handlers.static import wsgi as static_handler
 from aspen.utils import translate
 
@@ -29,10 +29,10 @@ log = logging.getLogger('gheat')
 conf = aspen.conf.gheat
 
 ALWAYS_BUILD = ('true', 'yes', '1')
-ALWAYS_BUILD = conf.get('always_build', '').lower() in ALWAYS_BUILD
+ALWAYS_BUILD = conf.get('_always_build', '').lower() in ALWAYS_BUILD
 
 BUILD_EMPTIES = ('true', 'yes', '1')
-BUILD_EMPTIES = conf.get('build_empties', 'true').lower() in BUILD_EMPTIES
+BUILD_EMPTIES = conf.get('_build_empties', 'true').lower() in BUILD_EMPTIES
 
 DIRMODE = conf.get('dirmode', '0755')
 try:
@@ -58,14 +58,14 @@ def get_cursor():
 # Try to find an image library.
 # =============================
 
-IMG_LIB = None 
-IMG_LIB_PIL = False 
-IMG_LIB_PYGAME = False
+BACKEND = None 
+BACKEND_PIL = False 
+BACKEND_PYGAME = False
 
-_want = conf.get('image_library', '').lower()
+_want = conf.get('backend', '').lower()
 if _want not in ('pil', 'pygame', ''):
-    raise ConfigurationError( "The %s image library is not supported, only PIL "
-                            + "and Pygame (assuming they are installed)."
+    raise ConfigurationError( "The %s backend is not supported, only PIL and "
+                            + "Pygame (assuming those libraries are installed)."
                              )
 
 if _want:
@@ -73,25 +73,25 @@ if _want:
         from gheat import pygame_ as backend
     elif _want == 'pil':
         from gheat import pil_ as backend
-    IMG_LIB = _want
+    BACKEND = _want
 else:
     try:
         from gheat import pygame_ as backend
-        IMG_LIB = 'pygame'
+        BACKEND = 'pygame'
     except ImportError:
         try:
             from gheat import pil_ as backend
-            IMG_LIB = 'pil'
+            BACKEND = 'pil'
         except ImportError:
             pass
     
-    if IMG_LIB is None:
+    if BACKEND is None:
         raise ImportError("Neither Pygame nor PIL could be imported.")
 
-IMG_LIB_PYGAME = IMG_LIB == 'pygame'
-IMG_LIB_PIL = IMG_LIB == 'pil'
+BACKEND_PYGAME = BACKEND == 'pygame'
+BACKEND_PIL = BACKEND == 'pil'
 
-log.info("Using the %s library" % IMG_LIB)
+log.info("Using the %s library" % BACKEND)
 
 
 # Set up color schemes and dots.
@@ -151,7 +151,7 @@ def wsgi(environ, start_response):
             y = int(y)
             assert 0 <= zoom <= 30, "bad zoom: %d" % zoom
         except AssertionError, err:
-            print err.args[0]
+            log.warn(err.args[0])
             start_response('400 Bad Request', [('CONTENT-TYPE','text/plain')])
             return ['Bad request.']
 
@@ -169,6 +169,8 @@ def wsgi(environ, start_response):
             log.info('rebuilding %s' % path)
             tile.rebuild()
             tile.save()
+        else:
+            log.info('serving cached tile %s' % path)
 
 
     environ['PATH_TRANSLATED'] = fspath

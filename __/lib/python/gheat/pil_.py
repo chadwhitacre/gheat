@@ -2,11 +2,24 @@ import os
 
 from PIL import Image, ImageChops
 from gheat import SIZE, base
+from gheat.opacity import OPAQUE
 
 
 class ColorScheme(base.ColorScheme):
+
     def hook_set(self, fspath):
         self.colors = Image.open(fspath).load()
+
+    def hook_build_empty(self, opacity, fspath):
+        color = self.colors[0, 255]
+        if len(color) == 4: # color map has per-pixel alpha
+            (conf, pixel) = opacity, color[3] 
+            opacity = int(( (conf/255.0)    # from configuration
+                          * (pixel/255.0)   # from per-pixel alpha
+                           ) * 255)
+        color = color[:3] + (opacity,)
+        tile = Image.new('RGBA', (SIZE, SIZE), color)
+        tile.save(fspath, 'PNG')
 
 
 class Dot(base.Dot):
@@ -29,19 +42,18 @@ class Tile(base.Tile):
         tile = self._start()
         tile = self._add_points(tile, points)
         tile = self._trim(tile)
-        foo  = self._colorize(tile)
-        tile = self._transparentate(tile)
+        foo  = self._colorize(tile) # returns None
         return tile
 
 
     def _start(self):
-        return Image.new('RGB', self.expanded_size, 'white')
+        return Image.new('RGBA', self.expanded_size, 'white')
 
 
     def _add_points(self, tile, points):
         for x,y in points:
-            dot_placed = Image.new('RGB', self.expanded_size, 'white')
-            dot_placed.paste(self.dot, (x-self.pad, y-self.pad))
+            dot_placed = Image.new('RGBA', self.expanded_size, 'white')
+            dot_placed.paste(self.dot, (x, y))
             tile = ImageChops.multiply(tile, dot_placed)
         return tile
   
@@ -53,20 +65,35 @@ class Tile(base.Tile):
 
 
     def _colorize(self, tile):
+        _computed_opacities = dict()
         pix = tile.load() # Image => PixelAccess
         for x in range(SIZE):
             for y in range(SIZE):
-                pix[x,y] = self.color_scheme.colors[0, pix[x,y][0]]
+
+                # Get color for this intensity
+                # ============================
+                # is a value 
+                
+                val = self.color_scheme.colors[0, pix[x,y][0]]
+                try:
+                    pix_alpha = val[3] # the color image has transparency
+                except IndexError:
+                    pix_alpha = OPAQUE # it doesn't
+                
+
+                # Blend the opacities
+                # ===================
+
+                conf, pixel = self.opacity, pix_alpha
+                if (conf, pixel) not in _computed_opacities:
+                    opacity = int(( (conf/255.0)    # from configuration
+                                  * (pixel/255.0)   # from per-pixel alpha
+                                   ) * 255)
+                    _computed_opacities[(conf, pixel)] = opacity
+                
+                pix[x,y] = val[:3] + (_computed_opacities[(conf, pixel)],)
 
     
-    def _transparentate(self, tile):
-        # Create an empty image and then paste the overlay on it with a mask.
-        overlay = Image.new('RGBA', (SIZE, SIZE), (0,0,0,0))
-        mask = Image.new('RGBA', (SIZE, SIZE), (255, 255, 255, self.opacity))
-        tile.paste(overlay, None, mask)
-        return tile
-
-
     def save(self):
         self.img.save(self.fspath, 'PNG')
 

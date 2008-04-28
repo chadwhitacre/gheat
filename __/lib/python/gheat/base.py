@@ -3,9 +3,10 @@ import os
 import stat
 
 import aspen
+import aspen.restarter
 import gheat
-import gmerc
 import gheat.opacity
+import gmerc
 from gheat import BUILD_EMPTIES, DIRMODE, SIZE, log
 
 
@@ -14,13 +15,22 @@ class ColorScheme(object):
     """
 
     def __init__(self, name, fspath):
-        """Takes the filesystem path of the defining PNG.
+        """Takes the name and filesystem path of the defining PNG.
         """
+        if aspen.mode.DEVDEB:
+            aspen.restarter.track(fspath)
         self.hook_set(fspath)
+        self.empties_dir = os.path.join(aspen.paths.root, name, 'empties')
+        self.build_empties()
 
-        empties_dir = os.path.join(aspen.paths.root, name, 'empties')
+
+    def build_empties(self):
+        """Build empty tiles for this color scheme.
+        """
+        empties_dir = self.empties_dir
+
         if not BUILD_EMPTIES:
-            log.info("not pre-creating empty tiles for %s" % name)
+            log.info("not building empty tiles for %s" % name)
         else:    
             if not os.path.isdir(empties_dir):
                 os.makedirs(empties_dir, DIRMODE)
@@ -36,13 +46,14 @@ class ColorScheme(object):
                 fspath = os.path.join(empties_dir, str(zoom)+'.png')
                 self.hook_build_empty(opacity, fspath)
             
-            log.info("pre-created empty tiles in %s" % empties_dir)
-
-        self.empties_dir = empties_dir
+            log.info("building empty tiles in %s" % empties_dir)
 
 
     def get_empty_fspath(self, zoom):
-        return os.path.join(self.empties_dir, str(zoom)+'.png')
+        fspath = os.path.join(self.empties_dir, str(zoom)+'.png')
+        if not os.path.isfile(fspath):
+            self.build_empties() # so we can rebuild empties on the fly
+        return fspath
 
 
     def hook_set(self):

@@ -33,15 +33,10 @@ class ColorScheme(base.ColorScheme):
         tile.fill(self.color_map[255])
         tile.convert_alpha()
 
-
-        # Hack cause we can't figure out Surface.set_alpha().
-        # ===================================================
-
-        (conf, pixel) = opacity, self.alpha_map
+        (conf, pixel) = opacity, self.alpha_map[255]
         opacity = int(( (conf/255.0)    # from configuration
                       * (pixel/255.0)   # from per-pixel alpha
                        ) * 255)
-
 
         pygame.surfarray.pixels_alpha(tile)[:,:] = opacity 
         pygame.image.save(tile, fspath)
@@ -89,7 +84,6 @@ class Tile(base.Tile):
 
 
     def _trim(self, tile):
-        tile = tile.convert_alpha(self.color_scheme.colors)
         tile = tile.subsurface(self.pad, self.pad, SIZE, SIZE).copy()
         #@ pygame.transform.chop says this or blit; this is plenty fast 
         return tile
@@ -120,6 +114,7 @@ class Tile(base.Tile):
 
         _computed_opacities = dict()
 
+        tile = tile.convert_alpha(self.color_scheme.colors)
         tile.lock()
         pix = pygame.surfarray.pixels3d(tile)
         alp = pygame.surfarray.pixels_alpha(tile)
