@@ -1,0 +1,364 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<link rel="STYLESHEET" href="gheat.css" type='text/css' />
+<link rel="SHORTCUT ICON" href="icons/zeta.ico" />
+<link rel='start' href='http://www.zetadev.com/software/gheat/' title='Gheat Homepage' />
+<link rel="first" href="gheat.html" title='Gheat' />
+<link rel='last' href='about.html' title='About this document...' />
+<link rel='help' href='about.html' title='About this document...' />
+<link rel="next" href="db.py.html" />
+<link rel="prev" href="installation.html" />
+<link rel="parent" href="gheat.html" />
+<link rel="next" href="db.py.html" />
+<meta name='aesop' content='information' />
+<title>3. Configuration</title>
+</head>
+<body>
+<DIV CLASS="navigation">
+<div id='top-navigation-panel' xml:id='top-navigation-panel'>
+<table align="center" width="100%" cellpadding="0" cellspacing="2">
+<tr>
+<td class='online-navigation'><a rel="prev" title="2. Installation"
+  href="installation.html"><img src='icons/previous.png'
+  border='0' height='32'  alt='Previous Page' width='32' /></A></td>
+<td class='online-navigation'><a rel="parent" title="Gheat"
+  href="gheat.html"><img src='icons/up.png'
+  border='0' height='32'  alt='Up One Level' width='32' /></A></td>
+<td class='online-navigation'><a rel="next" title="4. The db.py script"
+  href="db.py.html"><img src='icons/next.png'
+  border='0' height='32'  alt='Next Page' width='32' /></A></td>
+<td align="center" width="100%">Gheat</td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+</tr></table>
+<div class='online-navigation'>
+<b class="navlabel">Previous:</b>
+<a class="sectref" rel="prev" href="installation.html">2. Installation</A>
+<b class="navlabel">Up:</b>
+<a class="sectref" rel="parent" href="gheat.html">Gheat</A>
+<b class="navlabel">Next:</b>
+<a class="sectref" rel="next" href="db.py.html">4. The db.py script</A>
+</div>
+<hr /></div>
+</DIV>
+<!--End of Navigation Panel-->
+<div class='online-navigation'>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></a>
+
+<UL CLASS="ChildLinks">
+<LI><A href="configuration.html#SECTION003100000000000000000">3.1 Master Opacity</a>
+<LI><A href="configuration.html#SECTION003200000000000000000">3.2 Color Scheme</a>
+</ul>
+<!--End of Table of Child-Links-->
+</div>
+<HR>
+
+<H1><A NAME="SECTION003000000000000000000"></A>
+<A NAME="configuration"></A>
+<BR>
+3. Configuration
+</H1>
+
+<P>
+Gheat responds to three configuration options. These are located in the
+INI-formatted file <span class="file">__/etc/aspen.conf</span>, under a section named
+<code>[gheat]</code>. The three options are:
+
+<P>
+<div class="center"><table class="realtable">
+  <thead>
+    <tr>
+      <th class="left"  >Option</th>
+      <th class="left"  >Description</th>
+      <th class="left"  >Defaults</th>
+      </tr>
+    </thead>
+  <tbody>
+    <tr><td class="left"   valign="baseline"><var>backend</var></td>
+        <td class="left"  >The backend library to use for image generation; either 
+<code>Pygame</code> or <code>PIL</code> (case-insensitive). <code>Pygame</code> is three or four 
+times faster than <code>PIL</code>, but <code>PIL</code> can be easier to 
+install</td>
+        <td class="left"  ><code>Pygame</code> if available, then <code>PIL</code></td></tr>
+    <tr><td class="left"   valign="baseline"><var>zoom_opaque</var></td>
+        <td class="left"  >The zoom level at and below which the master opacity will 
+be 100%</td>
+        <td class="left"  >-3</td></tr>
+    <tr><td class="left"   valign="baseline"><var>zoom_transparent</var></td>
+        <td class="left"  >The zoom level at and above which the master opacity 
+will be 0%</td>
+        <td class="left"  >15</td></tr></tbody>
+</table></div>
+
+<P>
+Here is an example <span class="file">aspen.conf</span> file:
+
+<P>
+<div class="verbatim"><pre>
+[gheat]
+backend=PIL
+zoom_opaque=-1
+zoom_transparent=11
+</pre></div>
+
+<P>
+
+<H1><A NAME="SECTION003100000000000000000">
+3.1 Master Opacity</A>
+</H1>
+
+<P>
+Google Maps' zoom level is zero-indexed, starting furthest out. As of this
+writing there are 20 zoom levels in use, so the highest available zoom level
+(closest in) is 19. The master opacity for Gheat will be scaled linearly between
+<var>zoom_opaque</var> and <var>zoom_transparent</var>. So, for example, with the default
+settings (-3 to 15), the master opacities for each available zoom level are as 
+follows.
+
+<P>
+<div class="center"><table class="realtable">
+  <thead>
+    <tr>
+      <th class="left"  >Zoom</th>
+      <th class="left"  >Opacity</th>
+      </tr>
+    </thead>
+  <tbody>
+    <tr><td class="left"   valign="baseline">0</td>
+        <td class="left"  >82.8%</td></tr>
+    <tr><td class="left"   valign="baseline">1</td>
+        <td class="left"  >77.3</td></tr>
+    <tr><td class="left"   valign="baseline">2</td>
+        <td class="left"  >71.9</td></tr>
+    <tr><td class="left"   valign="baseline">3</td>
+        <td class="left"  >66.4</td></tr>
+    <tr><td class="left"   valign="baseline">4</td>
+        <td class="left"  >60.5</td></tr>
+    <tr><td class="left"   valign="baseline">5</td>
+        <td class="left"  >55.1</td></tr>
+    <tr><td class="left"   valign="baseline">6</td>
+        <td class="left"  >49.6</td></tr>
+    <tr><td class="left"   valign="baseline">7</td>
+        <td class="left"  >44.1</td></tr>
+    <tr><td class="left"   valign="baseline">8</td>
+        <td class="left"  >38.7</td></tr>
+    <tr><td class="left"   valign="baseline">9</td>
+        <td class="left"  >33.2</td></tr>
+    <tr><td class="left"   valign="baseline">10</td>
+        <td class="left"  >27.3</td></tr>
+    <tr><td class="left"   valign="baseline">11</td>
+        <td class="left"  >21.9</td></tr>
+    <tr><td class="left"   valign="baseline">12</td>
+        <td class="left"  >16.4</td></tr>
+    <tr><td class="left"   valign="baseline">13</td>
+        <td class="left"  >10.9</td></tr>
+    <tr><td class="left"   valign="baseline">14</td>
+        <td class="left"  >5.5</td></tr>
+    <tr><td class="left"   valign="baseline">15</td>
+        <td class="left"  >0.0</td></tr>
+    <tr><td class="left"   valign="baseline">16</td>
+        <td class="left"  >0.0</td></tr>
+    <tr><td class="left"   valign="baseline">17</td>
+        <td class="left"  >0.0</td></tr>
+    <tr><td class="left"   valign="baseline">18</td>
+        <td class="left"  >0.0</td></tr>
+    <tr><td class="left"   valign="baseline">19</td>
+        <td class="left"  >0.0</td></tr></tbody>
+</table></div>
+
+<P>
+If <var>zoom_transparent</var> is less than or equal to <var>zoom_opaque</var>, the
+opacity will be 100% for all zoom levels. The master opacity for each level is
+multiplied by any alpha channel in the color scheme (see below) to determine the
+final opacity of the image.
+
+<P>
+When you change the <var>zoom_opaque</var> and/or <var>zoom_transparent</var> settings,
+you need to manually delete the tile caches.
+
+<P>
+
+<H1><A NAME="SECTION003200000000000000000">
+3.2 Color Scheme</A>
+</H1>
+
+<P>
+When you wire up the client side of Gheat, you choose which color scheme you
+want to use (the process is described under Installation). The options
+bundled with Gheat are (the left image is the actual color scheme PNG; the right
+image is an example in use):
+
+<P>
+
+<DIV ALIGN="CENTER"><A NAME="fig:classic"></A><A NAME="174"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure 3.1:</STRONG>
+classic</CAPTION>
+<TR><TD><IMG
+  WIDTH="24" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./classic.png"
+ ALT="Image classic">
+<IMG
+  WIDTH="400" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./cs-classic.png"
+ ALT="Image cs-classic"></TD></TR>
+</TABLE>
+</DIV>
+
+<P>
+
+<DIV ALIGN="CENTER"><A NAME="fig:fire"></A><A NAME="180"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure 3.2:</STRONG>
+fire</CAPTION>
+<TR><TD><IMG
+  WIDTH="24" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./fire.png"
+ ALT="Image fire">
+<IMG
+  WIDTH="400" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./cs-fire.png"
+ ALT="Image cs-fire"></TD></TR>
+</TABLE>
+</DIV>
+
+<P>
+
+<DIV ALIGN="CENTER"><A NAME="fig:omg"></A><A NAME="186"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure 3.3:</STRONG>
+omg</CAPTION>
+<TR><TD><IMG
+  WIDTH="24" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./omg.png"
+ ALT="Image omg">
+<IMG
+  WIDTH="400" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./cs-omg.png"
+ ALT="Image cs-omg"></TD></TR>
+</TABLE>
+</DIV>
+
+<P>
+
+<DIV ALIGN="CENTER"><A NAME="fig:pgaitch"></A><A NAME="192"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure 3.4:</STRONG>
+pgaitch</CAPTION>
+<TR><TD><IMG
+  WIDTH="24" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./pgaitch.png"
+ ALT="Image pgaitch">
+<IMG
+  WIDTH="400" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./cs-pgaitch.png"
+ ALT="Image cs-pgaitch"></TD></TR>
+</TABLE>
+</DIV>
+
+<P>
+
+<DIV ALIGN="CENTER"><A NAME="fig:pbj"></A><A NAME="198"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure 3.5:</STRONG>
+pbj</CAPTION>
+<TR><TD><IMG
+  WIDTH="24" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./pbj.png"
+ ALT="Image pbj">
+<IMG
+  WIDTH="400" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./cs-pbj.png"
+ ALT="Image cs-pbj"></TD></TR>
+</TABLE>
+</DIV>
+
+<P>
+You can produce your own color scheme. A color scheme is defined by a PNG of
+height 256 pixels. The image may be as wide as you like; only the first column
+of pixels will be looked at. This first column is effectively a mapping of
+intensities to four-channel colors (red, green, blue, and alpha). To use a
+custom color scheme, place your PNG file in the <span class="file">__/etc/color-schemes/</span>
+directory of your Gheat installation, and use your PNG's filename without the
+<span class="file">.png</span> extension as the token to wire into your JavaScript.
+
+<P>
+The alpha channel of the pixels in the color scheme are multiplied with the
+master opacity setting for the given zoom level (see above) to determine the 
+final opacity of a given pixel in each tile.
+
+<P>
+If and when you change the PNG file for a color scheme of a given name, you
+need to manually delete the tile cache for that color scheme.
+
+<P>
+<div class="seealso">
+  <p class="heading">See Also:</p>
+
+<P>
+<dl compact="compact" class="seeurl">
+    <dt><a href='http://www.zetadev.com/software/aspen/0.8/doc/html/aspen-conf.html'
+        ><span class="file">aspen.conf</span></a></dt>
+    <dd>Documentation for the <span class="file">aspen.conf</span> file</dd>
+  </dl>
+
+<P>
+<dl compact="compact" class="seeurl">
+    <dt><a href='http://docs.python.org/lib/module-ConfigParser.html'
+        ><tt class="module">ConfigParser</tt></a></dt>
+    <dd>This
+describes the <span class="file">INI</span> format used in <span class="file">aspen.conf</span> (the
+<tt class="class">RawConfigParser</tt> is used)</dd>
+  </dl>
+
+<P>
+</div>
+
+<P>
+
+<DIV CLASS="navigation">
+<div class='online-navigation'>
+<p></p><hr />
+<table align="center" width="100%" cellpadding="0" cellspacing="2">
+<tr>
+<td class='online-navigation'><a rel="prev" title="2. Installation"
+  href="installation.html"><img src='icons/previous.png'
+  border='0' height='32'  alt='Previous Page' width='32' /></A></td>
+<td class='online-navigation'><a rel="parent" title="Gheat"
+  href="gheat.html"><img src='icons/up.png'
+  border='0' height='32'  alt='Up One Level' width='32' /></A></td>
+<td class='online-navigation'><a rel="next" title="4. The db.py script"
+  href="db.py.html"><img src='icons/next.png'
+  border='0' height='32'  alt='Next Page' width='32' /></A></td>
+<td align="center" width="100%">Gheat</td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+</tr></table>
+<div class='online-navigation'>
+<b class="navlabel">Previous:</b>
+<a class="sectref" rel="prev" href="installation.html">2. Installation</A>
+<b class="navlabel">Up:</b>
+<a class="sectref" rel="parent" href="gheat.html">Gheat</A>
+<b class="navlabel">Next:</b>
+<a class="sectref" rel="next" href="db.py.html">4. The db.py script</A>
+</div>
+</div>
+<hr />
+<span class="release-info">Release 0.2, documentation updated on April 29, 2008.</span>
+</DIV>
+<!--End of Navigation Panel-->
+<ADDRESS>
+<a href="http://www.zetadev.com/software/gheat/">Gheat</a> is copyright &copy; 2007-2008 by Chad Whitacre and contributors, and is offered under the MIT license.
+</ADDRESS>
+</BODY>
+</HTML>

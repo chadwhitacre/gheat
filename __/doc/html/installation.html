@@ -1,0 +1,251 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<link rel="STYLESHEET" href="gheat.css" type='text/css' />
+<link rel="SHORTCUT ICON" href="icons/zeta.ico" />
+<link rel='start' href='http://www.zetadev.com/software/gheat/' title='Gheat Homepage' />
+<link rel="first" href="gheat.html" title='Gheat' />
+<link rel='last' href='about.html' title='About this document...' />
+<link rel='help' href='about.html' title='About this document...' />
+<link rel="next" href="configuration.html" />
+<link rel="prev" href="introduction.html" />
+<link rel="parent" href="gheat.html" />
+<link rel="next" href="configuration.html" />
+<meta name='aesop' content='information' />
+<title>2. Installation</title>
+</head>
+<body>
+<DIV CLASS="navigation">
+<div id='top-navigation-panel' xml:id='top-navigation-panel'>
+<table align="center" width="100%" cellpadding="0" cellspacing="2">
+<tr>
+<td class='online-navigation'><a rel="prev" title="1. Introduction"
+  href="introduction.html"><img src='icons/previous.png'
+  border='0' height='32'  alt='Previous Page' width='32' /></A></td>
+<td class='online-navigation'><a rel="parent" title="Gheat"
+  href="gheat.html"><img src='icons/up.png'
+  border='0' height='32'  alt='Up One Level' width='32' /></A></td>
+<td class='online-navigation'><a rel="next" title="3. Configuration"
+  href="configuration.html"><img src='icons/next.png'
+  border='0' height='32'  alt='Next Page' width='32' /></A></td>
+<td align="center" width="100%">Gheat</td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+</tr></table>
+<div class='online-navigation'>
+<b class="navlabel">Previous:</b>
+<a class="sectref" rel="prev" href="introduction.html">1. Introduction</A>
+<b class="navlabel">Up:</b>
+<a class="sectref" rel="parent" href="gheat.html">Gheat</A>
+<b class="navlabel">Next:</b>
+<a class="sectref" rel="next" href="configuration.html">3. Configuration</A>
+</div>
+<hr /></div>
+</DIV>
+<!--End of Navigation Panel-->
+<div class='online-navigation'>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></a>
+
+<UL CLASS="ChildLinks">
+<LI><A href="installation.html#SECTION002100000000000000000">2.1 The Short Version</a>
+<LI><A href="installation.html#SECTION002200000000000000000">2.2 The Long Version</a>
+</ul>
+<!--End of Table of Child-Links-->
+</div>
+<HR>
+
+<H1><A NAME="SECTION002000000000000000000"></A>
+<A NAME="installation"></A>
+<BR>
+2. Installation
+</H1>
+
+<P>
+
+<H1><A NAME="SECTION002100000000000000000">
+2.1 The Short Version</A>
+</H1>
+
+<P>
+
+<UL>
+<LI>Install <a class="ulink" href="http://www.python.org/"
+  >Python</a> (version 2.5 or newer).
+</LI>
+<LI>Install <a class="ulink" href="http://www.zetadev.com/software/aspen/"
+  >Aspen</a> (version 0.8 or newer).
+</LI>
+<LI>Download the Gheat distribution.
+</LI>
+<LI>Install <a class="ulink" href="http://www.pygame.org/"
+  >Pygame</a> or <a class="ulink" href="http://www.pythonware.com/products/pil/"
+  >PIL</a>.
+</LI>
+<LI>Start <b class="program">aspen</b> in the Gheat distribution.
+</LI>
+<LI>Add a <a class="ulink" href="http://code.google.com/apis/maps/documentation/reference.html#GTileLayerOverlay"
+  >GTileLayerOverlay</a> to your embedded Google Map.
+</LI>
+</UL>
+
+<P>
+
+<H1><A NAME="SECTION002200000000000000000">
+2.2 The Long Version</A>
+</H1>
+
+<P>
+Gheat involves setting up a web application server, and then wiring up your
+web pages to make calls to that server via Google's JavaScript Maps API.
+
+<P>
+The server side of Gheat has a few dependencies. The first is
+<a class="ulink" href="http://www.python.org/"
+  >Python</a>. You need version 2.5 or newer, because
+Gheat requires the SQLite library, which was added to the standard library in
+2.5. There is also some 2.5 syntax in Gheat.  The second is
+<a class="ulink" href="http://www.zetadev.com/software/aspen/"
+  >Aspen</a>, which is a Python
+webserver. Gheat is known to work with Aspen version 0.8. At this point you can
+download and unpack the Gheat distribution, or check it out or export it from
+the Subversion repository. The next dependency is an imaging library; Gheat
+supports both <a class="ulink" href="http://www.pygame.org/"
+  >Pygame</a> and
+<a class="ulink" href="http://www.pythonware.com/products/pil/"
+  >PIL</a> (if you install Pygame,
+you only need the imaging components). You can either install it locally in the
+<span class="file">__</span> directory of the Gheat distribution (the
+<a class="ulink" href="http://pypi.python.org/pypi/virtualenv"
+  >virtualenv</a> tool is a great way
+to manage this directory), or you can install it globally. The pygame backend
+is three or four times faster than PIL, but PIL is easier to install.  The
+functionality is the same with both.
+
+<P>
+Once all dependencies are satisfied, run the <b class="program">aspen</b> program within the
+Gheat distribution, which is an Aspen website root. The Gheat distribution
+includes a sample database out of the box, so at this point you should be able
+to hit the webserver now running on your machine and see a heatmap tile. Try
+this URL:
+<a class="ulink" href="http://localhost:8080/classic/4/4,6.png"
+  >http://localhost:8080/classic/4/4,6.png</a>.
+
+<P>
+
+<DIV ALIGN="CENTER"><A NAME="fig:tile"></A><A NAME="57"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure 2.1:</STRONG>
+A heatmap tile</CAPTION>
+<TR><TD><IMG
+  WIDTH="256" HEIGHT="256" ALIGN="BOTTOM" BORDER="0"
+ SRC="./4,6.png"
+ ALT="Image 4,6"></TD></TR>
+</TABLE>
+</DIV>
+
+<P>
+If you see an image like in Figure 2.1, then congratulations! You have
+successfully installed the Gheat server.
+
+<P>
+Once you get the server running, you need to set things up on the client side.
+First, you need to embed a <a class="ulink" href="http://code.google.com/apis/maps/"
+  >Google
+Map</a> on a web page. Then you need to define
+a new map layer using
+<a class="ulink" href="http://code.google.com/apis/maps/documentation/reference.html#GTileLayer"
+  >GTileLayer</a>
+and
+<a class="ulink" href="http://code.google.com/apis/maps/documentation/reference.html#GTileLayerOverlay"
+  >GTileLayerOverlay</a>.
+There is an example at <span class="file">example.html</span> in the Gheat distribution to get you
+started. With your Gheat server running, hit
+<a class="ulink" href="http://localhost:8080/example.html"
+  >http://localhost:8080/example.html</a>
+to see it in action (you may need to tweak the Google Maps API key). If it
+works, you will see the heatmap tiles loaded overtop of the underlying Google
+Map, and you will feel pumped.
+
+<P>
+<div class="seealso">
+  <p class="heading">See Also:</p>
+
+<dl compact="compact" class="seeurl">
+    <dt><a href='http://www.zetadev.com/software/aspen/'
+        >Aspen</a></dt>
+    <dd>The homepage for the Aspen webserver</dd>
+  </dl>
+<dl compact="compact" class="seeurl">
+    <dt><a href='http://code.google.com/apis/maps/'
+        >Google Maps</a></dt>
+    <dd>The homepage for the Google Maps API</dd>
+  </dl>
+<dl compact="compact" class="seeurl">
+    <dt><a href='http://www.pythonware.com/products/pil/'
+        >PIL</a></dt>
+    <dd>The homepage for the Python Imaging Library (PIL)</dd>
+  </dl>
+<dl compact="compact" class="seeurl">
+    <dt><a href='http://www.pygame.org/'
+        >Pygame</a></dt>
+    <dd>The homepage for the Pygame library</dd>
+  </dl>
+<dl compact="compact" class="seeurl">
+    <dt><a href='http://www.python.org/'
+        >Python</a></dt>
+    <dd>The homepage for the Python programming language</dd>
+  </dl>
+<dl compact="compact" class="seeurl">
+    <dt><a href='http://pypi.python.org/pypi/virtualenv'
+        >virtualenv</a></dt>
+    <dd>The homepage for virtualenv, a tool to create isolated Python environments</dd>
+  </dl>
+</div>
+
+<P>
+
+<DIV CLASS="navigation">
+<div class='online-navigation'>
+<p></p><hr />
+<table align="center" width="100%" cellpadding="0" cellspacing="2">
+<tr>
+<td class='online-navigation'><a rel="prev" title="1. Introduction"
+  href="introduction.html"><img src='icons/previous.png'
+  border='0' height='32'  alt='Previous Page' width='32' /></A></td>
+<td class='online-navigation'><a rel="parent" title="Gheat"
+  href="gheat.html"><img src='icons/up.png'
+  border='0' height='32'  alt='Up One Level' width='32' /></A></td>
+<td class='online-navigation'><a rel="next" title="3. Configuration"
+  href="configuration.html"><img src='icons/next.png'
+  border='0' height='32'  alt='Next Page' width='32' /></A></td>
+<td align="center" width="100%">Gheat</td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+<td class='online-navigation'><img src='icons/blank.png'
+  border='0' height='32'  alt='' width='32' /></td>
+</tr></table>
+<div class='online-navigation'>
+<b class="navlabel">Previous:</b>
+<a class="sectref" rel="prev" href="introduction.html">1. Introduction</A>
+<b class="navlabel">Up:</b>
+<a class="sectref" rel="parent" href="gheat.html">Gheat</A>
+<b class="navlabel">Next:</b>
+<a class="sectref" rel="next" href="configuration.html">3. Configuration</A>
+</div>
+</div>
+<hr />
+<span class="release-info">Release 0.2, documentation updated on April 29, 2008.</span>
+</DIV>
+<!--End of Navigation Panel-->
+<ADDRESS>
+<a href="http://www.zetadev.com/software/gheat/">Gheat</a> is copyright &copy; 2007-2008 by Chad Whitacre and contributors, and is offered under the MIT license.
+</ADDRESS>
+</BODY>
+</HTML>
