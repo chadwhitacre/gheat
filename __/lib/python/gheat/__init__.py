@@ -98,7 +98,7 @@ log.info("Using the %s library" % BACKEND)
 # ==============================
 
 color_schemes = dict()          # this is used below
-_color_schemes_dir = os.path.join(aspen.paths.__, 'etc', 'color_schemes')
+_color_schemes_dir = os.path.join(aspen.paths.__, 'etc', 'color-schemes')
 for fname in os.listdir(_color_schemes_dir):
     if not fname.endswith('.png'):
         continue
