@@ -68,11 +68,16 @@ updates the database accordingly.
 
 Gheat only generates tiles containing data when requested, and it stores these
 tiles on the filesystem for future use. On subsequent requests, if no data
-relevant to the tile has changed then the image is served straight from the
+relevant to the tile has changed, then the image is served straight from the
 filesystem. This saves considerable processing time. Most tiles will be empty,
 however, and Gheat precreates empty tiles for all zoom levels and serves the
 same file for all empty tiles at a given zoom level. This saves considerable
-disk space as well.
+disk space. These tile caches are organized on the filesystem under the name of
+each color scheme in the root of the gheat distribution. Under each such
+directory, there is a directory for each zoom level (named \file{0}, \file{1},
+\file{2}, etc.), and another called \file{empties}. Gheat will create and
+recreate tile cache directories as necessary, and tile caches can be safely
+deleted at any time.
 
 Because of the cost of generating heatmaps, Gheat is probably not suitable for
 realtime applications. But Gheat performs well when the underlying dataset
@@ -134,43 +139,15 @@ successfully installed the Gheat server.
 Once you get the server running, you need to set things up on the client side.
 First, you need to embed a \ulink{Google
 Map}{http://code.google.com/apis/maps/} on a web page. Then you need to define
-a new map layer with JavaScript code like this (see the Google Maps API
-Reference for
+a new map layer using
 \ulink{GTileLayer}{http://code.google.com/apis/maps/documentation/reference.html#GTileLayer}
 and
-\ulink{GTileLayerOverlay}{http://code.google.com/apis/maps/documentation/reference.html#GTileLayerOverlay}
-for full details):
-
-\begin{verbatim}
-bounds = new GLatLngBounds(new GLatLng(-90, -180), new GLatLng(90, 180));
-copyright = new GCopyright( 'your-org-copyright'
-                          , bounds
-                          , 0
-                          , "(c) 2008 Your Org <www.example.com>"
-                           );
-copyrights = new GCopyrightCollection();
-copyrights.addCopyright(copyright);
-gheat = new GTileLayer(copyrights, 10, 0);
-gheat.getTileUrl = function (tile, zoom) {
-  base = "http://localhost:8080";
-  color_scheme = 'classic';
-  url = base +'/'+ color_scheme +'/'+ zoom +'/'+ tile.x +','+ tile.y +'.png';
-  return url;
-}
-gheat.isPng = function () {return true;}
-gheat.getOpacity = function () {return 1.0;}
-\end{verbatim}
-
-Be sure to tweak the variables under \code{GCopyright} and \code{getTileUrl}
-for your situation. This code should run when the page loads, and then when the
-map is loaded, you need to add the overlay thus defined to the map, like this:
-
-\begin{verbatim}
-map.addOverlay(new GTileLayerOverlay(gheat));
-\end{verbatim}
-
-If it works, you will see the heatmap tiles loaded overtop of the underlying
-Google Map, and you will feel pumped.
+\ulink{GTileLayerOverlay}{http://code.google.com/apis/maps/documentation/reference.html#GTileLayerOverlay}.
+There is an example at \file{example.html} in the Gheat distribution to get you
+started. With your Gheat server running, hit
+\ulink{http://localhost:8080/example.html}{http://localhost:8080/example.html}
+to see it in action. If it works, you will see the heatmap tiles loaded overtop
+of the underlying Google Map, and you will feel pumped.
 
 \begin{seealso}
 \seelink{http://www.zetadev.com/software/aspen/}{Aspen}{The homepage for the Aspen webserver}
@@ -249,6 +226,8 @@ opacity will be 100\% for all zoom levels. The master opacity for each level is
 multiplied by any alpha channel in the color scheme (see below) to determine the
 final opacity of the image.
 
+When you change the \var{zoom_opaque} and/or \var{zoom_transparent} settings,
+you need to manually delete the tile caches.
 
 \section{Color Scheme}
 
@@ -298,6 +277,9 @@ directory of your Gheat installation, and use your PNG's filename without the
 The alpha channel of the pixels in the color scheme are multiplied with the
 master opacity setting for the given zoom level (see above) to determine the 
 final opacity of a given pixel in each tile.
+
+If and when you change the PNG file for a color scheme of a given name, you
+need to manually delete the tile cache for that color scheme.
 
 \begin{seealso}
 
