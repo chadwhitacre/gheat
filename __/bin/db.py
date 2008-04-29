@@ -5,47 +5,25 @@ First run "__/bin/db.py create", then run this script without arguments: it
 should find the points.txt and points.db files.
 
 """
-import math
+import csv
 import os
 import sqlite3
 import stat
 import sys
 from datetime import datetime
-from StringIO import StringIO
 
 import aspen
-root = aspen.find_root()
-aspen.configure(['--root', root])
-
-sys.stdout = StringIO()
-from geopy import distance # why junk at import-time?!
-sys.stdout = sys.__stdout__
+aspen.configure()
 
 
-__all__ = ['clear', 'count', 'create', 'delete', 'intensify', 'main',
-           'normalize', 'sync']
+__all__ = ['clear', 'count', 'delete', 'sync']
 
-
-THRESHOLD = 20 # distance in miles within which points must be of each other
-
-# Set up some helpers for roughly converting degrees to miles.
-# ============================================================
-# These are based off of manual calculations at:
-#   http://www.csgnetwork.com/degreelenllavcalc.html
-
-ROUGH_MILE_DEGREE = 70.0
-ROUGH_LAT = 1.0/ROUGH_MILE_DEGREE * THRESHOLD
-def ROUGH_LNG(lat):
-    lat = (lat - ROUGH_LAT) if (lat >= 0) else (lat + ROUGH_LAT)
-    lat_mile_degree = (lat / 90.0) * ROUGH_MILE_DEGREE
-    miles = 1.0/lat_mile_degree * THRESHOLD
-    return miles
 
 RAWPATH = os.path.join(aspen.paths.__, 'var', 'points.txt')
 DBPATH = os.path.join(aspen.paths.__, 'var', 'points.db')
 
 
-def create():
+def _create():
     cur = CONN.cursor()
     cur.execute("""
 
@@ -55,7 +33,6 @@ def create():
             lat         REAL                                ,
             lng         REAL                                ,
 
-            intensity   REAL DEFAULT 1.0                    ,
             modtime     TIMESTAMP                           ,
             seentime    TIMESTAMP
 
@@ -79,106 +56,6 @@ def delete():
     os.remove(DBPATH)
 
 
-def intensify():
-    """Calculate intensities for each point.
-    """
-
-    sys.stdout.write('intensifying'); sys.stdout.flush()
-
-    cur = CONN.cursor()
-    cur.execute("SELECT * FROM points")
-    points = list(cur)
-    cur.close() # only one connection at a time on Windows?
-
-    for point in points:
-
-        # Select points roughly within the limit.
-        # =======================================
-        # This saves us a lot of time.
-
-        n = point['lat'] + ROUGH_LAT
-        s = point['lat'] - ROUGH_LAT
-        e = point['lng'] + ROUGH_LNG(point['lat'])
-        w = point['lng'] - ROUGH_LNG(point['lat'])
-
-        others = CONN.cursor()
-        others.execute("""
-
-            SELECT *
-              FROM points
-             WHERE lat <= ?
-               AND lat >= ?
-               AND lng <= ?
-               AND lng >= ?
-
-        """, (n,s,e,w))
-
-
-        # Narrow down to only points actually within the limit.
-        # =====================================================
-
-        intensity = 0
-        for other in others:
-            d = distance.distance( (point['lat'], point['lng'])
-                                 , (other['lat'], other['lng'])
-                                  )
-            km = d.calculate() # accounts for 0
-            if (km == 0) or (d.miles <= THRESHOLD):
-                intensity += 1
-
-        cur = CONN.cursor()
-        cur.execute( "UPDATE points SET intensity = ? WHERE uid = ?"
-                   , (intensity, point['uid'])
-                    )
-
-        sys.stdout.write('.'); sys.stdout.flush()
-
-    print 'done'
-
-
-def main():
-    """Update the database.
-    """
-    sync()
-    intensify()
-    normalize()
-
-
-def normalize():
-    """Normalize intensities.
-    """
-
-    sys.stdout.write('normalizing'); sys.stdout.flush()
-
-    hist = {}
-
-    cur = CONN.cursor()
-    cur.execute("SELECT * FROM points")
-    points = list(cur)
-    cur.close() # only one connection at a time on Windows?
-    
-    update = CONN.cursor()
-
-    for point in points:
-        assert point['intensity'] >= 1.0
-        normalized_intensity = (100 - (100.0 / point['intensity'])) / 100.0
-        update.execute( "UPDATE points SET intensity = ? WHERE uid = ?"
-                      , (normalized_intensity, point['uid'])
-                       )
-        sys.stdout.write('.'); sys.stdout.flush()
-
-    print 'done'
-
-#        if normalized_intensity in hist:
-#            hist[normalized_intensity] += 1
-#        else:
-#            hist[normalized_intensity] = 1
-#
-#
-#    for k, v in sorted(hist.items()):
-#        print "%0.6f" % k, ('#'*v)
-
-
 def sync():
     """Synchronize points.db with points.txt.
     """
@@ -188,17 +65,16 @@ def sync():
     cur = CONN.cursor()
     modtime = datetime.fromtimestamp(os.stat(RAWPATH)[stat.ST_MTIME])
 
-    for point in open(RAWPATH, 'r'):
+    for point in csv.reader(open(RAWPATH, 'r')):
 
         # Parse and validate values.
         # ==========================
 
-        assert point.count(',') == 2, "bad line: " + point
-        uid, lat, lng = point.split(',')
+        uid, lat, lng = point
         try:
             lat = float(lat)
             lng = float(lng)
-        except:
+        except ValueError:
             print "bad line:", point
 
 
@@ -206,14 +82,12 @@ def sync():
         # ==========================================
         # After this, 'point' will either be None or a sqlite3.Row.
 
-        result = cur.execute( "SELECT * FROM points WHERE uid = ?"
-                            , (uid,)
-                             )
+        result = cur.execute("SELECT * FROM points WHERE uid = ?", (uid,))
         result = result.fetchall()
         numresults = len(result) if (result is not None) else 0
         if numresults not in (0, 1):
             msg = "%d result[s]; wanted 0 or 1" % numresults
-            print "bad record: <%s> [%s]" % (uid, msg)
+            print >> sys.stderr, "bad record: <%s> [%s]" % (uid, msg)
         point = result[0] if (numresults == 1) else None
 
 
@@ -274,18 +148,27 @@ if __name__ == '__main__':
     try:
         subc = sys.argv[1]
     except IndexError:
-        subc = 'main'
+        subc = 'sync' # default
 
     if subc not in __all__:
         raise SystemExit("I wonder, what does '%s' mean?" % subc)
 
-    if subc not in ('create', 'delete'):
-        if not os.path.isfile(DBPATH):
-            raise SystemExit("Please create the db first with 'create'.")
 
+    # Connect and execute
+    # ===================
+    # The connect() call will create the database if it doesn't exist. If it was
+    # created (i.e., it didn't exist before connect()), we also need to create 
+    # the initial table. Since _create() only creates the table if it doesn't
+    # exist, and the little extra db hit doesn't affect performance here, we
+    # just call _create() every time.
+
+    need_table = os.path.isfile(DBPATH)
     CONN = sqlite3.connect(DBPATH)
     CONN.row_factory = sqlite3.Row # gives us key access
+    if subc != 'delete':
+        _create() # sets up our table if needed
     func = globals()[subc]
     func()
     CONN.commit()
     CONN.close()
+
