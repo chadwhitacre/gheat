@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 """Update the database from the txt/csv file.
 
 First run "__/bin/db.py create", then run this script without arguments: it 
