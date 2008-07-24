@@ -48,7 +48,7 @@ def clear():
 
 def count():
     cur = CONN.cursor()
-    cur.execute("SELECT COUNT(id) FROM points")
+    cur.execute("SELECT COUNT(uid) FROM points")
     print cur.fetchone()[0]
 
 
