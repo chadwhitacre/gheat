@@ -1,6 +1,9 @@
 import logging
 import os
-import sqlite3
+try:
+    from pysqlite2 import dbapi2 as sqlite3 # custom or OS-packaged version
+except ImportError:
+    import sqlite3                          # stock Python 2.5+ stdlib version
 import stat
 
 import aspen

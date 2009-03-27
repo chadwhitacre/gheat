@@ -3,7 +3,10 @@ import os
 import stat
 
 import aspen
-import aspen.restarter
+try:
+    from aspen import restarter     # v0.8
+except ImportError:
+    from aspen.ipc import restarter # trunk (v0.9?)
 import gheat
 import gheat.opacity
 import gmerc
@@ -18,7 +21,7 @@ class ColorScheme(object):
         """Takes the name and filesystem path of the defining PNG.
         """
         if aspen.mode.DEVDEB:
-            aspen.restarter.track(fspath)
+            restarter.track(fspath)
         self.hook_set(fspath)
         self.empties_dir = os.path.join(aspen.paths.root, name, 'empties')
         self.build_empties()
