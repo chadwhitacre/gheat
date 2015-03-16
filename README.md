@@ -100,6 +100,9 @@ You tell Google Maps (via their API) to place these images over your embedded ma
   * You need Pygame 1.8.1 (saving to PNG was [ broken in 1.8.0](http://pygame.motherhamster.org/bugzilla/show_bug.cgi?id=13))
   * You need to install [numpy](http://numpy.scipy.org/) before you can use Pygame.
 
-----
+## Links
 
-[Full documentation](http://www.zetadev.com/software/gheat/0.2/__/doc/html/) is available.
+  * **[Documentation](http://www.zetadev.com/software/gheat/0.2/__/doc/html/)**
+  * [Screencast](http://blag.whit537.org/2008/04/gheat-02-pygame-pretty-colors.html)
+  * [Ruby starting-point](http://blog.corunet.com/english/the-definitive-heatmap)  (thanks David :^)
+  * [other software from Zeta](http://www.zetadev.com/software/)
