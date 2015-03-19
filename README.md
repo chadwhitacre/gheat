@@ -1,3 +1,7 @@
+# Update: Google Maps now has [native support for heatmaps](https://developers.google.com/maps/documentation/javascript/heatmaplayer). Go use that.
+
+----
+
 Google Maps gives you [API](http://code.google.com/apis/maps/documentation/reference.html#GTileLayerOverlay) for adding additional map layers. This software implements a map tile server for a heatmap layer. 
 
 ![](http://static.whit537.org/2008/heatmap-0.2.png)
